@@ -3,6 +3,10 @@ h1, h2 {
   font-weight: normal;
 }
 
+label {
+  color: black;
+  font-weight: bold;
+}
 .content {
   margin:15px;
 }
@@ -35,10 +39,14 @@ p {
       <a-button type="primary" @click="setOep4Contract()">OK</a-button>
     </div>
     <div class="content">
-      <a-button @click="init()">Init OEP4</a-button>
+      <!-- <a-button @click="init()">Init OEP4</a-button>
       <a-button @click="queryTotalSupply()">Query Total Supply</a-button>
       <a-button @click="queryDecimal()">Query Decimal</a-button>
-      <a-button @click="queryName()">Query Name</a-button>
+      <a-button @click="queryName()">Query Name</a-button> -->
+      <p><label for="">OEP4 Name: </label> {{oep4Name}}</p>
+      <p><label for="">Symbol: </label> {{symbol}}</p>
+      <p><label for="">Decimal:</label>  {{decimal}}</p>
+      <p><label for="">Total supply:  </label> {{totalSupply}}</p>      
     </div>
     
     <div class="content">
@@ -81,7 +89,12 @@ export default {
       account: null,
       address: '',
       receiver: 'AQyDzhRBQr1trEbvfDcLpEzxff7dtFcyRc',
-      amount: 0
+      amount: 0,
+
+      oep4Name: '',
+      symbol: '',
+      totalSupply: 0,
+      decimal: ''
     }
   },
   async mounted() {
@@ -119,7 +132,46 @@ export default {
         }
         const address = new Crypto.Address(utils.reverseHex(this.contractHash))
         this.contractAddr = address;
+        const params1 = {
+          contract: this.contractHash,
+          method: 'Name',
+          parameters: []
+        }
+        let name = await this.scInvoke(params1, true); 
+        if(name) {
+          name = utils.hexstr2str(name);
+        } 
+        this.oep4Name = name;
+        const params2 = {
+          contract: this.contractHash,
+          method: 'TotalSupply',
+          parameters: []
+        }
+        let totalSupply = await this.scInvoke(params2, true);
+        if(totalSupply) {
+          totalSupply = parseInt(utils.reverseHex(totalSupply), 16)
+        }
+        this.totalSupply = totalSupply;
+        const params3 = {
+          contract: this.contractHash,
+          method: 'Decimal',
+          parameters: []
+        }
+        let decimal = await this.scInvoke(params3, true);
+        if(decimal) {
+          decimal = parseInt(utils.reverseHex(decimal), 16)
+        }
+        this.decimal = decimal;
+        const params4 = {
+          contract: this.contractHash,
+          method: 'Symbol',
+          parameters: []
+        }
+        let symbol = await this.scInvoke(params1, true);
+        symbol = utils.hexstr2str(symbol)
+        this.symbol = symbol;
         this.$message.success('The contract has been deployed successfully!')
+
       }
     },
     async init() {
