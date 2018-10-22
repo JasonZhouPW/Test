@@ -29,10 +29,23 @@ p {
 .transfer-content p {
   font-size:20px;
 }
+.prinet-input {
+  width:200px;
+}
 </style>
 <template>
   <div class="hello">
     <h1>OEP-4 Demo</h1>
+    <div class="content">
+      <label for="">Choolse network:</label>
+        <a-radio-group name="network" v-model="network">
+          <a-radio :value="1">Test Net</a-radio>
+          <a-radio :value="2">Main Net</a-radio>
+          <a-radio :value="3">Private Net</a-radio>
+          <a-input v-model="prinet" placeholder="Enter the url of your private network" class="prinet-input"
+          :disabled="network!==3"/>
+        </a-radio-group>
+    </div>
     <div class="content">
       <label>OEP-4 Contract</label>
       <a-input type="text" class="address-input" v-model="contractHash" placeholder="OEP4 contract hash" />
@@ -94,7 +107,10 @@ export default {
       oep4Name: '',
       symbol: '',
       totalSupply: 0,
-      decimal: ''
+      decimal: '',
+
+      network: 1,
+      prinet: 'http://127.0.0.1'
     }
   },
   async mounted() {
@@ -123,11 +139,29 @@ export default {
   methods: {
     async setOep4Contract() {
       if(this.contractHash){
-        const restClient = new RestClient();// Default connect to Testnet
-        const res = await restClient.getContract(this.contractHash);
+        let url = '';
+        if(this.network === 1) {
+          url = 'http://polaris1.ont.io:20334'
+        } else if(this.network === 2) {
+          url = 'http://dappnode1.ont.io:20334'
+        } else {
+          url = this.prinet+ ':20334'
+        }
+        const restClient = new RestClient(url);// Default connect to Testnet
+        let res;
+        try {
+          res = await restClient.getContract(this.contractHash);
+        } catch(err) {
+          this.$message.error('Network error')
+          return;
+        }
         console.log(JSON.stringify(res))
         if(!res.Result) {
           this.$message.error('The contract has not been deployed yet.')
+          this.oep4Name = '';
+          this.symbol = '';
+          this.decimal = '';
+          this.totalSupply = '';
           return;
         }
         const address = new Crypto.Address(utils.reverseHex(this.contractHash))
